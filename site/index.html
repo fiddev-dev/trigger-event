@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tugas Dasar Coding — UTS</title>
+<style>
+:root {
+    --bg: #1e1e2e;
+    --panel: #27273a;
+    --accent: #4582ff;
+    --text: #f0f0f5;
+    --muted: #9a9ab0;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+header {
+    width: 100%;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--panel);
+    border-bottom: 1px solid #0003;
+}
+header h1 {
+    font-size: 16px;
+    margin: 0;
+    font-weight: 600;
+}
+header .sub { font-size: 12px; color: var(--muted); }
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px;
+}
+#stage-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    aspect-ratio: 4 / 3;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px #0008;
+}
+#stage {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: auto;
+}
+#status {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--muted);
+    background: #00000080;
+    pointer-events: none;
+    transition: opacity .3s;
+}
+#status.hidden { opacity: 0; }
+.controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background .15s, transform .05s;
+}
+button:hover { background: #5a94ff; }
+button:active { transform: scale(.97); }
+button.secondary {
+    background: var(--panel);
+    border: 1px solid #ffffff1f;
+}
+button.secondary:hover { background: #33334a; }
+.hint {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    max-width: 720px;
+}
+kbd {
+    background: #ffffff14;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-family: inherit;
+}
+</style>
+</head>
+<body>
+<header>
+    <div>
+        <h1>Tugas Dasar Coding — UTS (Lanjutan)</h1>
+        <div class="sub">Dijalankan langsung di browser — tanpa server</div>
+    </div>
+</header>
+<main>
+    <div id="stage-wrapper">
+        <canvas id="stage" width="480" height="360"></canvas>
+        <div id="status">Memuat…</div>
+    </div>
+    <div class="controls">
+        <button id="btn-flag" title="Mulai (Green Flag)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 2v12M3 4h9l-2 3 2 3H3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Mulai
+        </button>
+        <button id="btn-stop" class="secondary" title="Stop">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" fill="#fff"/></svg>
+            Stop
+        </button>
+        <button id="btn-fullsize" class="secondary" title="Layar penuh">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 5V2h3M9 2h3v3M12 9v3H9M5 12H2V9" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Penuh
+        </button>
+    </div>
+    <div class="hint">
+        Klik <strong>Start</strong> untuk menjalankan. Gunakan mouse &amp; keyboard untuk interaksi.
+        Tekan <kbd>Space</kbd> / tombol panah sesuai block di projek.
+    </div>
+</main>
+<script src="runtime.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn-fullsize').addEventListener('click', () => {
+        document.getElementById('stage-wrapper').requestFullscreen().catch(() => {});
+    });
+});
+</script>
+</body>
+</html>

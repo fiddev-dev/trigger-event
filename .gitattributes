@@ -1,2 +1,13 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Binary assets from sb3 — keep as-is, no CRLF conversion
+site/assets/* binary
+site/project.json text
+site/runtime.js text
+*.sb3 binary
+*.png binary
+*.jpg binary
+*.svg binary
+*.mp3 binary
+*.wav binary
