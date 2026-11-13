@@ -57,12 +57,52 @@ main {
     overflow: hidden;
     box-shadow: 0 8px 40px #0008;
 }
+#stage-frame,
+#stage-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
 #stage {
     width: 100%;
     height: 100%;
     display: block;
     image-rendering: auto;
     touch-action: none;
+}
+/* Fullscreen: batasi area panggung ke rasio 16:9, game tetap proporsional 4:3 */
+#stage-wrapper:fullscreen {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    width: min(100vw, calc(100vh * 16 / 9));
+    height: min(100vh, calc(100vw * 9 / 16));
+    max-width: none;
+    aspect-ratio: 16 / 9;
+    border-radius: 0;
+    box-shadow: none;
+    background: #000;
+}
+#stage-wrapper:fullscreen #stage-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+#stage-wrapper:fullscreen #stage-content {
+    width: auto;
+    height: 100%;
+    aspect-ratio: 4 / 3;
+    flex: 0 0 auto;
+}
+/* Layar ponsel landscape pendek: panggung menyesuaikan tinggi layar */
+@media (orientation: landscape) and (max-height: 560px) {
+    header, .hint { display: none; }
+    main { padding: 8px; gap: 8px; }
+    #stage-wrapper {
+        max-width: none;
+        width: min(calc(100vw - 16px), calc((100vh - 64px) * 4 / 3));
+    }
 }
 #status {
     position: absolute;
@@ -105,61 +145,183 @@ button.secondary {
 }
 button.secondary:hover { background: #33334a; }
 
-/* Mobile on-screen control bar */
-#mobile-controls {
+/* In-game touch controls (overlay di atas panggung) */
+#game-controls {
     display: none;
-    width: 100%;
-    max-width: 480px;
-    gap: 14px;
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    align-items: flex-end;
     justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    margin-top: 4px;
-}
-.mc-group {
-    display: flex;
-    gap: 10px;
-}
-#mobile-controls button {
-    flex: 1 1 auto;
-    justify-content: center;
-    min-width: 52px;
-    min-height: 56px;
-    padding: 8px 10px;
-    font-size: 15px;
-    border-radius: 12px;
+    gap: 12px;
+    padding: clamp(10px, 2.4vmin, 20px);
+    padding-top: max(clamp(10px, 2.4vmin, 20px), env(safe-area-inset-top));
+    padding-bottom: max(clamp(10px, 2.4vmin, 20px), env(safe-area-inset-bottom));
+    padding-left: max(clamp(10px, 2.4vmin, 20px), env(safe-area-inset-left));
+    padding-right: max(clamp(10px, 2.4vmin, 20px), env(safe-area-inset-right));
+    pointer-events: none;
     user-select: none;
     -webkit-user-select: none;
+}
+@media (hover: none), (pointer: coarse), (max-width: 900px) {
+    #game-controls { display: flex; }
+}
+.gc-side {
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(8px, 1.6vmin, 14px);
+    pointer-events: none;
+}
+.gc-left {
+    transition: opacity .18s ease;
+}
+/* Saat dialog aktif: sembunyikan gerak & buang, angkat aksi agar kotak dialog tetap terbaca */
+#game-controls.dialog-active {
+    align-items: center;
+}
+#game-controls.dialog-active .gc-left {
+    opacity: 0;
+    pointer-events: none;
+}
+#game-controls.dialog-active #gc-trash {
+    display: none;
+}
+.gc-right {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: clamp(8px, 1.4vmin, 14px);
+}
+.gc-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: clamp(8px, 1.6vmin, 14px);
+}
+.gc-choices {
+    display: flex;
+    gap: 6px;
+    margin-right: 2px;
+}
+.gc-btn {
+    --gc-size: clamp(54px, 14.5vmin, 72px);
+    width: var(--gc-size);
+    height: var(--gc-size);
+    flex: 0 0 auto;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border-radius: 50%;
+    border: 3px solid rgba(12, 12, 12, .92);
+    background: rgba(255, 255, 255, .82);
+    color: #111;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .38), inset 0 0 0 1px rgba(255, 255, 255, .6);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     touch-action: none;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .08s ease, background-color .12s ease;
+}
+#game-controls .gc-btn:hover,
+#game-controls .gc-chip:hover {
+    background: rgba(255, 255, 255, .92);
+}
+.gc-btn svg {
+    width: 46%;
+    height: 46%;
+    display: block;
+    pointer-events: none;
+}
+.gc-btn.gc-move svg {
+    width: 52%;
+    height: 52%;
+}
+.gc-btn.pressed,
+.gc-btn:active {
+    background: #fff;
+    transform: scale(.92);
+}
+.gc-cap {
+    font-size: clamp(7px, 1.4vmin, 9px);
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    pointer-events: none;
+}
+.gc-chip {
+    width: clamp(32px, 8.4vmin, 40px);
+    height: clamp(32px, 8.4vmin, 40px);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid rgba(12, 12, 12, .75);
+    background: rgba(255, 255, 255, .72);
+    color: #111;
+    font-size: clamp(11px, 3vmin, 14px);
+    font-weight: 800;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .3);
+    touch-action: none;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .08s ease, background-color .12s ease;
+}
+.gc-chip.pressed,
+.gc-chip:active {
+    background: #fff;
+    transform: scale(.9);
+}
+.gc-exit {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .35);
+    background: rgba(0, 0, 0, .45);
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
 }
-#mobile-controls button.hold {
-    background: #3a3a55;
-    border: 1px solid #ffffff1f;
-    min-width: 64px;
+#stage-wrapper:fullscreen .gc-exit { display: flex; }
+.gc-exit:hover { background: rgba(0, 0, 0, .7); }
+.rotate-hint {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .62);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 5;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
 }
-#mobile-controls button.hold.pressed {
-    background: var(--accent);
-}
-#mobile-controls button.opt {
-    background: #3a3a55;
-    border: 1px solid #ffffff1f;
-    min-width: 44px;
-}
-#mobile-controls button.opt.pressed {
-    background: var(--accent);
-}
-#mobile-controls .mc-label {
-    display: block;
-    font-size: 9px;
-    font-weight: 400;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: #ffffffaa;
-    margin-bottom: 2px;
-}
-#mobile-controls .mc-text {
-    font-size: 13px;
+.rotate-hint svg { width: 16px; height: 16px; }
+@media (hover: none) and (pointer: coarse) and (orientation: portrait) {
+    .rotate-hint { display: flex; }
 }
 .hint {
     font-size: 12px;
@@ -192,8 +354,44 @@ kbd {
 </header>
 <main>
     <div id="stage-wrapper">
-        <canvas id="stage" width="480" height="360"></canvas>
-        <div id="status">Memuat…</div>
+        <div id="stage-frame">
+            <div id="stage-content">
+                <canvas id="stage" width="480" height="360"></canvas>
+                <div id="status">Memuat…</div>
+                <div id="game-controls" role="group" aria-label="Kontrol permainan">
+                    <div class="gc-side gc-left">
+                        <button id="gc-left" class="gc-btn gc-move" type="button" aria-label="Gerak kiri">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.9 5.4c.6-.5 1.5 0 1.5.8v11.6c0 .8-.9 1.3-1.5.8l-7.6-5.8a1 1 0 0 1 0-1.6z" fill="currentColor"/></svg>
+                        </button>
+                        <button id="gc-right" class="gc-btn gc-move" type="button" aria-label="Gerak kanan">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.1 5.4c-.6-.5-1.5 0-1.5.8v11.6c0 .8.9 1.3 1.5.8l7.6-5.8a1 1 0 0 0 0-1.6z" fill="currentColor"/></svg>
+                        </button>
+                    </div>
+                    <div class="gc-side gc-right">
+                        <div class="gc-choices" aria-label="Navigasi cepat">
+                            <button id="gc-2" class="gc-chip" type="button" aria-label="Pilihan 2">2</button>
+                            <button id="gc-3" class="gc-chip" type="button" aria-label="Pilihan 3">3</button>
+                            <button id="gc-4" class="gc-chip" type="button" aria-label="Pilihan 4">4</button>
+                        </div>
+                        <div class="gc-actions">
+                            <button id="gc-interact" class="gc-btn" type="button" aria-label="Interaksi">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4l7.07 17 2.51-7.39L21 11.07z"/></svg>
+                                <span class="gc-cap">Interaksi</span>
+                            </button>
+                            <button id="gc-trash" class="gc-btn" type="button" aria-label="Buang sampah">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                                <span class="gc-cap">Buang</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="rotate-hint" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 5h4"/></svg>
+                        Miringkan HP
+                    </div>
+                </div>
+                <button id="gc-exit" class="gc-exit" type="button" aria-label="Keluar layar penuh">✕</button>
+            </div>
+        </div>
     </div>
     <div class="controls">
         <button id="btn-flag" title="Mulai (Green Flag)">
@@ -210,48 +408,13 @@ kbd {
         </button>
     </div>
 
-    <div id="mobile-controls">
-        <div class="mc-group">
-            <button id="mbtn-left" class="hold" aria-label="Kiri">
-                <span class="mc-label">Kiri</span>
-                <span class="mc-text">◀ A</span>
-            </button>
-            <button id="mbtn-right" class="hold" aria-label="Kanan">
-                <span class="mc-label">Kanan</span>
-                <span class="mc-text">D ▶</span>
-            </button>
-        </div>
-        <div class="mc-group">
-            <button id="mbtn-interact" class="opt" aria-label="Aksi / ambil">
-                <span class="mc-label">Aksi</span>
-                <span class="mc-text">F</span>
-            </button>
-            <button id="mbtn-confirm" class="opt" aria-label="Konfirmasi / skip dialog">
-                <span class="mc-label">Enter</span>
-                <span class="mc-text">␣</span>
-            </button>
-        </div>
-        <div class="mc-group">
-            <button id="mopt-2" class="opt" aria-label="Pilihan 2"><span class="mc-text">2</span></button>
-            <button id="mopt-3" class="opt" aria-label="Pilihan 3"><span class="mc-text">3</span></button>
-            <button id="mopt-4" class="opt" aria-label="Pilihan 4"><span class="mc-text">4</span></button>
-        </div>
-    </div>
-
     <div class="hint">
-        Klik <strong>Start</strong> untuk menjalankan. Sentuh / klik layar untuk dialog &amp; tombol di dalam
-        <strong>stage</strong>. Di layar kecil, tombol di bawah (<span class="kbd">A/D</span> gerak,
-        <span class="kbd">F</span> aksi, <span class="kbd">␣</span> skip dialog,
-        <span class="kbd">2·3·4</span> pilihan) menggantikan keyboard.
+        Klik <strong>Mulai</strong> untuk menjalankan. Sentuh / klik layar untuk dialog &amp; tombol di dalam
+        <strong>stage</strong>. Di ponsel, tombol gerak tampil di kiri layar game, sedangkan
+        <strong>Interaksi</strong> dan <strong>Buang</strong> di kanan. Tombol <strong>Penuh</strong>
+        membuka layar penuh 16:9 dan otomatis memutar ke mode landscape.
     </div>
 </main>
 <script src="runtime.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btn-fullsize').addEventListener('click', () => {
-        document.getElementById('stage-wrapper').requestFullscreen().catch(() => {});
-    });
-});
-</script>
 </body>
 </html>

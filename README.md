@@ -66,9 +66,23 @@ main branch → Folder: `/site`**. Tidak perlu branch terpisah.
 
 | Tombol | Fungsi |
 | ------ | ------ |
-| **Mulai** | Jalankan green-flag (semua `when flag clicked`) |
+| **Mulai** | Jalankan green-flag (semua `when flag clicked`). Di ponsel sekaligus masuk fullscreen + landscape |
 | **Stop**  | Hentikan semua thread (`stopAll`) |
-| **Penuh** | Request fullscreen pada area stage |
+| **Penuh** | Fullscreen area stage, dibatasi rasio 16:9 |
 
-Mouse & keyboard (spasi, panah, huruf) diteruskan ke VM sesuai block yang
-didefinisikan dalam projek.
+Di ponsel, tombol kendali tampil sebagai overlay **di atas layar game**:
+
+| Posisi | Tombol | Key |
+| ------ | ------ | --- |
+| Kiri bawah | ◀ / ▶ | `A` / `D` |
+| Kanan bawah | **Interaksi** (ambil sampah, dialog, masuk rumah, mulai) | `F` + `Spasi` |
+| Kanan bawah | **Buang** (buang sampah ke tong) | `F` |
+| Kanan atas aksi | `2` `3` `4` (navigasi cepat) | `2` / `3` / `4` |
+
+Fullscreen memakai rasio 16:9 (game tetap proporsional 4:3 di tengah). Di
+Android, menekan **Mulai** mencoba mengunci orientasi ke landscape lewat
+Fullscreen + Screen Orientation API. Jika browser tidak mendukung (mis. iOS),
+muncul petunjuk untuk memiringkan HP secara manual.
+
+Mouse & keyboard (spasi, panah, huruf) tetap diteruskan ke VM sesuai block
+yang didefinisikan dalam projek.

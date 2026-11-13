@@ -5,5 +5,4 @@ dist/
 .cache/
 .playwright-mcp/
 *.local
-'
-site/runtime.js.map'
+site/runtime.js.map
