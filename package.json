@@ -5,7 +5,7 @@
   "description": "Scratch projek 'Tugas Dasar Coding UTS (Lanjutan)' sebagai website statis client-side untuk GitHub Pages",
   "scripts": {
     "build": "node build.js",
-    "dev": "node -e \"require('esbuild').build({entryPoints:['src/main.js'],bundle:true,outfile:'site/runtime.js',format:'iife',target:'es2018',platform:'browser',sourcemap:true,watch:true,define:{'process.env.NODE_ENV':'\\\"development\\\"'}}).catch(()=>process.exit(1))\"",
+    "dev": "node build.js --watch",
     "start": "python -m http.server 8099 -d site"
   },
   "dependencies": {
