@@ -126,30 +126,157 @@ async function main () {
     document.getElementById('btn-flag').addEventListener('click', () => vm.greenFlag());
     document.getElementById('btn-stop').addEventListener('click', () => vm.stopAll());
 
-    // Mouse
+    // Helper: post a key down/up to the VM keyboard device
+    const key = (k, isDown) => vm.postIOData('keyboard', { key: k, isDown });
+
+    // ---- Mobile on-screen action buttons ----
+    // Maps on-screen buttons to the exact keys the project expects:
+    //   a / d = move character, space + f = interact / pick up, 2/3/4 = dialog choices
+    const heldKeys = {};
+    const pressKey = (k) => {
+        if (heldKeys[k]) return;
+        heldKeys[k] = true;
+        key(k, true);
+    };
+    const releaseKey = (k) => {
+        if (!heldKeys[k]) return;
+        heldKeys[k] = false;
+        key(k, false);
+    };
+    const releaseAllHeld = () => {
+        for (const k of Object.keys(heldKeys)) releaseKey(k);
+    };
+
+    const bindHoldButton = (id, k, opt = {}) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const down = (e) => {
+            e.preventDefault();
+            if (opt.resume !== false) resumeAudio();
+            pressKey(k);
+            el.classList.add('pressed');
+            if (opt.click) vm.postIOData('mouse', { isDown: true, wasDragged: false, x: 0, y: 0, canvasWidth: CANVAS_WIDTH, canvasHeight: CANVAS_HEIGHT });
+        };
+        const up = (e) => {
+            if (e) e.preventDefault();
+            releaseKey(k);
+            el.classList.remove('pressed');
+            if (opt.click) vm.postIOData('mouse', { isDown: false, wasDragged: true });
+        };
+        el.addEventListener('pointerdown', down);
+        el.addEventListener('pointerup', up);
+        el.addEventListener('pointercancel', up);
+        el.addEventListener('pointerleave', up);
+        el.addEventListener('contextmenu', (e) => e.preventDefault());
+    };
+
+    bindHoldButton('mbtn-left', 'a');
+    bindHoldButton('mbtn-right', 'd');
+    bindHoldButton('mbtn-interact', 'f');
+    bindHoldButton('mbtn-confirm', ' ');
+    // One-tap dialog choices (2/3/4): down + quick up
+    const bindTapButton = (id, k) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            resumeAudio();
+            pressKey(k);
+            el.classList.add('pressed');
+        });
+        const finishTap = () => {
+            releaseKey(k);
+            el.classList.remove('pressed');
+        };
+        el.addEventListener('pointerup', finishTap);
+        el.addEventListener('pointercancel', finishTap);
+        el.addEventListener('contextmenu', (e) => e.preventDefault());
+    };
+    bindTapButton('mopt-2', '2');
+    bindTapButton('mopt-3', '3');
+    bindTapButton('mopt-4', '4');
+
+    // Hide the mobile bar on desktop (>= 1024px) so it never shows on desktop
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const mobileBar = document.getElementById('mobile-controls');
+    const applyMobileBar = () => {
+        if (mobileBar) mobileBar.style.display = mq.matches ? 'none' : 'flex';
+    };
+    applyMobileBar();
+    if (mq.addEventListener) mq.addEventListener('change', applyMobileBar);
+    else if (mq.addListener) mq.addListener(applyMobileBar);
+
+    // Release all held keys if the page loses focus / user navigates away
+    window.addEventListener('blur', releaseAllHeld);
+
+    // Pointer input (unifies mouse + touch). Tapping the canvas drives the
+    // sprite click / dialog buttons inside the stage.
     const canvasBounds = () => canvas.getBoundingClientRect();
-    const mouseData = (clientX, clientY, isDown) => {
+    const toCanvas = (clientX, clientY) => {
         const b = canvasBounds();
         return {
             x: (clientX - b.left) * (CANVAS_WIDTH / b.width),
-            y: (clientY - b.top) * (CANVAS_HEIGHT / b.height),
-            isDown,
-            canvasWidth: CANVAS_WIDTH,
-            canvasHeight: CANVAS_HEIGHT,
-            wasDragged: false
+            y: (clientY - b.top) * (CANVAS_HEIGHT / b.height)
         };
     };
-    canvas.addEventListener('mousemove', (e) => {
-        vm.postIOData('mouse', mouseData(e.clientX, e.clientY, false));
+    const mouseData = (clientX, clientY, isDown, wasDragged) => {
+        const p = toCanvas(clientX, clientY);
+        return {
+            x: p.x,
+            y: p.y,
+            isDown,
+            wasDragged,
+            canvasWidth: CANVAS_WIDTH,
+            canvasHeight: CANVAS_HEIGHT
+        };
+    };
+
+    // Track the active pointer so a touch-drag works like a mouse-drag.
+    let activePointer = null;
+    let lastPointer = { x: 0, y: 0 };
+    let moved = false;
+
+    canvas.addEventListener('pointerdown', (e) => {
+        resumeAudio();
+        if (activePointer !== null) return; // only track one pointer
+        activePointer = e.pointerId;
+        moved = false;
+        lastPointer = toCanvas(e.clientX, e.clientY);
+        vm.postIOData('mouse', mouseData(e.clientX, e.clientY, true, false));
+        canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
     });
-    canvas.addEventListener('mousedown', (e) => {
-        vm.postIOData('mouse', mouseData(e.clientX, e.clientY, true));
+
+    canvas.addEventListener('pointermove', (e) => {
+        const p = toCanvas(e.clientX, e.clientY);
+        if (activePointer !== null && e.pointerId === activePointer) {
+            // Drag: report movement; mark as drag so click hats don't refire
+            moved = true;
+            vm.postIOData('mouse', mouseData(e.clientX, e.clientY, true, true));
+            lastPointer = p;
+        } else {
+            // Hover (no button pressed)
+            vm.postIOData('mouse', mouseData(e.clientX, e.clientY, false, false));
+        }
     });
-    canvas.addEventListener('mouseup', (e) => {
-        vm.postIOData('mouse', mouseData(e.clientX, e.clientY, false));
-    });
-    canvas.addEventListener('mouseleave', () => {
-        vm.postIOData('mouse', { isDown: false });
+
+    const endPointer = (e) => {
+        if (activePointer === null || (e.pointerId !== undefined && e.pointerId !== activePointer)) return;
+        const wasTap = !moved;
+        // A tap should fire the "clicked" hat. Scratch mouse model: release
+        // with isDown=false; the click hat fires on the transition up when the
+        // target was not draggable, or on down for draggable targets. Posting
+        // up here with wasDragged=false lets the VM handle the click.
+        if (e.clientX !== undefined) {
+            vm.postIOData('mouse', mouseData(e.clientX, e.clientY, false, !wasTap));
+        } else {
+            vm.postIOData('mouse', { isDown: false, wasDragged: !wasTap });
+        }
+        activePointer = null;
+    };
+    canvas.addEventListener('pointerup', endPointer);
+    canvas.addEventListener('pointercancel', endPointer);
+    canvas.addEventListener('pointerleave', () => {
+        if (activePointer === null) vm.postIOData('mouse', { isDown: false });
     });
 
     // Keyboard

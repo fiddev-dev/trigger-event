@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Tugas Dasar Coding — UTS</title>
 <style>
 :root {
@@ -62,6 +62,7 @@ main {
     height: 100%;
     display: block;
     image-rendering: auto;
+    touch-action: none;
 }
 #status {
     position: absolute;
@@ -103,6 +104,63 @@ button.secondary {
     border: 1px solid #ffffff1f;
 }
 button.secondary:hover { background: #33334a; }
+
+/* Mobile on-screen control bar */
+#mobile-controls {
+    display: none;
+    width: 100%;
+    max-width: 480px;
+    gap: 14px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-top: 4px;
+}
+.mc-group {
+    display: flex;
+    gap: 10px;
+}
+#mobile-controls button {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 52px;
+    min-height: 56px;
+    padding: 8px 10px;
+    font-size: 15px;
+    border-radius: 12px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+}
+#mobile-controls button.hold {
+    background: #3a3a55;
+    border: 1px solid #ffffff1f;
+    min-width: 64px;
+}
+#mobile-controls button.hold.pressed {
+    background: var(--accent);
+}
+#mobile-controls button.opt {
+    background: #3a3a55;
+    border: 1px solid #ffffff1f;
+    min-width: 44px;
+}
+#mobile-controls button.opt.pressed {
+    background: var(--accent);
+}
+#mobile-controls .mc-label {
+    display: block;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #ffffffaa;
+    margin-bottom: 2px;
+}
+#mobile-controls .mc-text {
+    font-size: 13px;
+}
 .hint {
     font-size: 12px;
     color: var(--muted);
@@ -110,6 +168,13 @@ button.secondary:hover { background: #33334a; }
     max-width: 720px;
 }
 kbd {
+    background: #ffffff14;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-family: inherit;
+}
+.kbd {
     background: #ffffff14;
     border-radius: 4px;
     padding: 1px 5px;
@@ -144,9 +209,40 @@ kbd {
             Penuh
         </button>
     </div>
+
+    <div id="mobile-controls">
+        <div class="mc-group">
+            <button id="mbtn-left" class="hold" aria-label="Kiri">
+                <span class="mc-label">Kiri</span>
+                <span class="mc-text">◀ A</span>
+            </button>
+            <button id="mbtn-right" class="hold" aria-label="Kanan">
+                <span class="mc-label">Kanan</span>
+                <span class="mc-text">D ▶</span>
+            </button>
+        </div>
+        <div class="mc-group">
+            <button id="mbtn-interact" class="opt" aria-label="Aksi / ambil">
+                <span class="mc-label">Aksi</span>
+                <span class="mc-text">F</span>
+            </button>
+            <button id="mbtn-confirm" class="opt" aria-label="Konfirmasi / skip dialog">
+                <span class="mc-label">Enter</span>
+                <span class="mc-text">␣</span>
+            </button>
+        </div>
+        <div class="mc-group">
+            <button id="mopt-2" class="opt" aria-label="Pilihan 2"><span class="mc-text">2</span></button>
+            <button id="mopt-3" class="opt" aria-label="Pilihan 3"><span class="mc-text">3</span></button>
+            <button id="mopt-4" class="opt" aria-label="Pilihan 4"><span class="mc-text">4</span></button>
+        </div>
+    </div>
+
     <div class="hint">
-        Klik <strong>Start</strong> untuk menjalankan. Gunakan mouse &amp; keyboard untuk interaksi.
-        Tekan <kbd>Space</kbd> / tombol panah sesuai block di projek.
+        Klik <strong>Start</strong> untuk menjalankan. Sentuh / klik layar untuk dialog &amp; tombol di dalam
+        <strong>stage</strong>. Di layar kecil, tombol di bawah (<span class="kbd">A/D</span> gerak,
+        <span class="kbd">F</span> aksi, <span class="kbd">␣</span> skip dialog,
+        <span class="kbd">2·3·4</span> pilihan) menggantikan keyboard.
     </div>
 </main>
 <script src="runtime.js"></script>
